@@ -5,9 +5,9 @@
 Set these values in `.env`:
 
 ```env
-EXPO_PUBLIC_SUPPORT_EMAIL=your-monitored-address@example.com
-EXPO_PUBLIC_PRIVACY_URL=https://your-domain.com/privacy.html
-EXPO_PUBLIC_SUPPORT_URL=https://your-domain.com/support.html
+EXPO_PUBLIC_SUPPORT_EMAIL=fayadhkader@gmail.com
+EXPO_PUBLIC_PRIVACY_URL=https://ok-seven-wheat.vercel.app/privacy
+EXPO_PUBLIC_SUPPORT_URL=https://ok-seven-wheat.vercel.app/support
 ```
 
 Deploy the whole project to Vercel or another Expo-compatible static host. `vercel.json` is already
@@ -26,7 +26,7 @@ In Supabase → Authentication → URL Configuration, add:
 
 ```text
 networkloop://**
-https://your-domain.com/**
+https://ok-seven-wheat.vercel.app/**
 http://localhost:8086/**
 ```
 
@@ -42,7 +42,7 @@ SMTP provider before inviting public users. Update the sender name to NetworkLoo
 - resend confirmation
 - password reset
 
-## 3. Initialize EAS
+## 3. EAS project
 
 ```bash
 npm install
@@ -50,8 +50,8 @@ npx eas-cli login
 npx eas-cli init
 ```
 
-`eas init` connects this local project to your Expo account. Commit the generated project ID in
-app configuration.
+The app is connected to the Expo account `fayadhkader` as `@fayadhkader/networkloop`. Its EAS
+project ID is committed in app configuration.
 
 ## 4. Make a preview build
 

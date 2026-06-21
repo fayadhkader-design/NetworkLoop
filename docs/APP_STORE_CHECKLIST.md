@@ -23,8 +23,8 @@ accounts, legal identity, final URLs, or business decisions.
 ## Owner actions before TestFlight
 
 - [ ] Join the Apple Developer Program.
-- [ ] Create an Expo account and run `eas login`.
-- [ ] Run `eas init` so Expo adds the project ID to app configuration.
+- [x] Create an Expo account and run `eas login`.
+- [x] Run `eas init` so Expo adds the project ID to app configuration.
 - [x] Add a monitored support email to `.env` as `EXPO_PUBLIC_SUPPORT_EMAIL`.
 - [x] Deploy the app, privacy policy, and support page to a public HTTPS domain.
 - [x] Replace the placeholder URLs in `.env` with the deployed URLs.
