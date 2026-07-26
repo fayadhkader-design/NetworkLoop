@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { colors } from '@/constants/colors';
 import { isSupabaseConfigured } from '@/lib/supabase';
+import { useAuth } from '@/providers/auth-provider';
 
 export function AuthScreen({
   title,
@@ -21,6 +22,8 @@ export function AuthScreen({
   footerLink: string;
   footerHref: '/login' | '/signup';
 }>) {
+  const { authError } = useAuth();
+
   return (
     <SafeAreaView style={styles.safe}>
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -37,6 +40,12 @@ export function AuthScreen({
             <View style={styles.notice}>
               <Ionicons name="information-circle-outline" size={20} color={colors.warning} />
               <Text style={styles.noticeText}>Add your Supabase values to a .env file before signing in.</Text>
+            </View>
+          ) : null}
+          {authError ? (
+            <View style={styles.notice}>
+              <Ionicons name="cloud-offline-outline" size={20} color={colors.warning} />
+              <Text style={styles.noticeText}>{authError}</Text>
             </View>
           ) : null}
           <View style={styles.form}>{children}</View>

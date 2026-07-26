@@ -1,0 +1,31 @@
+name: Supabase keep-alive
+
+on:
+  schedule:
+    # Runs every Monday and Thursday at 14:00 UTC.
+    # Supabase free projects may pause after low activity over 7 days,
+    # so twice per week gives the project a gentle database touch.
+    - cron: '0 14 * * 1,4'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    name: Ping Supabase database
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Call keep_alive RPC
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          test -n "$SUPABASE_URL"
+          test -n "$SUPABASE_ANON_KEY"
+
+          curl --fail --show-error --silent \
+            --request POST "$SUPABASE_URL/rest/v1/rpc/keep_alive" \
+            --header "apikey: $SUPABASE_ANON_KEY" \
+            --header "Authorization: Bearer $SUPABASE_ANON_KEY" \
+            --header "Content-Type: application/json" \
+            --data '{}'

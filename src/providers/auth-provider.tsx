@@ -9,6 +9,7 @@ type AuthContextValue = {
   session: Session | null;
   user: User | null;
   loading: boolean;
+  authError: string | null;
   signOut: () => Promise<void>;
 };
 
@@ -39,6 +40,7 @@ async function handleAuthLink(url: string) {
 export function AuthProvider({ children }: PropsWithChildren) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
@@ -46,10 +48,18 @@ export function AuthProvider({ children }: PropsWithChildren) {
       return;
     }
 
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setLoading(false);
-    });
+    supabase.auth.getSession()
+      .then(({ data, error }) => {
+        if (error) setAuthError(error.message);
+        setSession(data.session);
+      })
+      .catch(() => {
+        setAuthError('NetworkLoop could not connect to Supabase. Check your internet connection or Supabase project status.');
+        setSession(null);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
 
     if (Platform.OS !== 'web') {
       Linking.getInitialURL().then((url) => {
@@ -62,6 +72,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       : null;
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setAuthError(null);
       setSession(nextSession);
       setLoading(false);
     });
@@ -76,11 +87,12 @@ export function AuthProvider({ children }: PropsWithChildren) {
     session,
     user: session?.user ?? null,
     loading,
+    authError,
     signOut: async () => {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
     },
-  }), [loading, session]);
+  }), [authError, loading, session]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
