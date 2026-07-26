@@ -64,7 +64,7 @@ export default function ResetPasswordScreen() {
         autoComplete="new-password"
         placeholder="Repeat new password"
       />
-      <Button label="Update password" onPress={updatePassword} loading={loading} disabled={!session} />
+      <Button label="Update password" onPress={updatePassword} loading={loading} />
     </AuthScreen>
   );
 }

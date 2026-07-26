@@ -61,10 +61,12 @@ export function AuthProvider({ children }: PropsWithChildren) {
         setLoading(false);
       });
 
-    if (Platform.OS !== 'web') {
-      Linking.getInitialURL().then((url) => {
-        if (url) handleAuthLink(url);
-      });
+    Linking.getInitialURL().then((url) => {
+      if (url) handleAuthLink(url);
+    }).catch(() => null);
+
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      handleAuthLink(window.location.href).catch(() => null);
     }
 
     const linkingSubscription = Platform.OS !== 'web'
