@@ -29,7 +29,8 @@ accounts, legal identity, final URLs, or business decisions.
 - [x] Deploy the app, privacy policy, and support page to a public HTTPS domain.
 - [x] Replace the placeholder URLs in `.env` with the deployed URLs.
 - [x] Add the deployed URLs and `networkloop://**` to Supabase Auth redirect URLs.
-- [ ] Configure custom SMTP in Supabase for production confirmation and reset emails.
+- [ ] Replace temporary personal Gmail SMTP sender with an app-owned address before publishing.
+- [ ] Configure/test custom SMTP in Supabase for production confirmation and reset emails.
 - [ ] Create a production EAS build and test it on a physical iPhone.
 - [ ] Confirm account deletion on a disposable test account.
 
@@ -48,6 +49,7 @@ accounts, legal identity, final URLs, or business decisions.
 ## Final release checks
 
 - [ ] No placeholder text, email addresses, or domains remain.
+- [ ] Auth emails do not send from a personal Gmail address.
 - [ ] All links work without requiring a developer computer.
 - [ ] Email confirmation opens the installed app.
 - [ ] Password reset opens the installed app and updates the password.
