@@ -1,5 +1,5 @@
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useMemo, useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 
 import { AuthScreen } from '@/components/auth-screen';
@@ -11,18 +11,29 @@ import { useAuth } from '@/providers/auth-provider';
 
 export default function ResetPasswordScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ error?: string; error_code?: string; error_description?: string }>();
   const { session } = useAuth();
   const [password, setPassword] = useState('');
   const [confirmation, setConfirmation] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
+  const linkError = useMemo(() => {
+    if (!params.error && !params.error_code && !params.error_description) return null;
+    if (params.error_code === 'otp_expired') {
+      return 'This password-reset link expired or was already used. Start over to request a fresh link.';
+    }
+    return params.error_description
+      ? String(params.error_description).replace(/\+/g, ' ')
+      : 'This password-reset link is invalid. Start over to request a fresh link.';
+  }, [params.error, params.error_code, params.error_description]);
+
   async function updatePassword() {
     setMessage(null);
     if (!session) {
       setMessage({
         type: 'error',
-        text: 'Open the latest password-reset link from your email before choosing a new password.',
+        text: linkError ?? 'Open the latest password-reset link from your email before choosing a new password.',
       });
       return;
     }
@@ -72,7 +83,12 @@ export default function ResetPasswordScreen() {
         autoComplete="new-password"
         placeholder="Repeat new password"
       />
-      {message ? (
+      {linkError ? (
+        <View style={[styles.notice, styles.error]}>
+          <Text style={[styles.noticeText, styles.errorText]}>{linkError}</Text>
+        </View>
+      ) : null}
+      {message && !linkError ? (
         <View style={[styles.notice, message.type === 'success' ? styles.success : styles.error]}>
           <Text style={[styles.noticeText, message.type === 'success' ? styles.successText : styles.errorText]}>
             {message.text}
