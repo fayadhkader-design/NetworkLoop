@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { FormInput } from '@/components/ui/form-input';
@@ -12,11 +12,32 @@ export default function DeleteAccountScreen() {
   const [confirmation, setConfirmation] = useState('');
   const [loading, setLoading] = useState(false);
 
+  async function deleteForever() {
+    setLoading(true);
+    const { error } = await supabase.rpc('delete_own_account');
+    setLoading(false);
+    if (error) {
+      Alert.alert('Could not delete account', error.message);
+      return;
+    }
+    await supabase.auth.signOut({ scope: 'local' });
+    router.replace('/login');
+  }
+
   async function deleteAccount() {
     if (confirmation.trim().toUpperCase() !== 'DELETE') {
       Alert.alert('Confirmation required', 'Type DELETE to confirm permanent account deletion.');
       return;
     }
+
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm(
+        'Permanently delete your NetworkLoop account, contacts, and conversation notes? This cannot be undone.',
+      );
+      if (confirmed) await deleteForever();
+      return;
+    }
+
     Alert.alert(
       'Permanently delete account?',
       'Your account, contacts, and conversation notes will be deleted immediately. This cannot be undone.',
@@ -25,17 +46,7 @@ export default function DeleteAccountScreen() {
         {
           text: 'Delete forever',
           style: 'destructive',
-          onPress: async () => {
-            setLoading(true);
-            const { error } = await supabase.rpc('delete_own_account');
-            setLoading(false);
-            if (error) {
-              Alert.alert('Could not delete account', error.message);
-              return;
-            }
-            await supabase.auth.signOut({ scope: 'local' });
-            router.replace('/login');
-          },
+          onPress: deleteForever,
         },
       ],
     );
