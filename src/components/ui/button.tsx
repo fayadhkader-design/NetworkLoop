@@ -53,11 +53,11 @@ const styles = StyleSheet.create({
   secondary: { backgroundColor: colors.primarySoft },
   danger: { backgroundColor: colors.dangerSoft },
   ghost: { backgroundColor: 'transparent' },
-  label: { fontSize: 16, fontWeight: '700' },
+  label: { fontSize: 15, fontWeight: '700' },
   primaryLabel: { color: colors.white },
   secondaryLabel: { color: colors.primaryDark },
   dangerLabel: { color: colors.danger },
   ghostLabel: { color: colors.primary },
   pressed: { opacity: 0.8, transform: [{ scale: 0.99 }] },
-  disabled: { opacity: 0.55 },
+  disabled: { opacity: 0.45 },
 });

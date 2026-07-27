@@ -25,7 +25,7 @@ export function FormInput({ label, hint, multiline, style, ...props }: FormInput
 
 const styles = StyleSheet.create({
   group: { gap: 7 },
-  label: { color: colors.text, fontSize: 14, fontWeight: '700' },
+  label: { color: colors.text, fontSize: 13, fontWeight: '700' },
   input: {
     minHeight: 50,
     borderWidth: 1,
@@ -33,9 +33,9 @@ const styles = StyleSheet.create({
     borderRadius: 13,
     backgroundColor: colors.surface,
     color: colors.text,
-    fontSize: 16,
+    fontSize: 15.5,
     paddingHorizontal: 14,
   },
   multiline: { minHeight: 112, paddingTop: 14 },
-  hint: { color: colors.textMuted, fontSize: 12 },
+  hint: { color: colors.textSubtle, fontSize: 12 },
 });

@@ -7,7 +7,8 @@ import { StatusBadge } from '@/components/status-badge';
 import { Button } from '@/components/ui/button';
 import { EmptyState, LoadingState } from '@/components/ui/states';
 import { colors } from '@/constants/colors';
-import { formatDate, followUpLabel, todayDateString } from '@/lib/date';
+import { avatarColor, compactDueLabel, contactLine, initials } from '@/lib/design';
+import { formatDate, todayDateString } from '@/lib/date';
 import { supabase } from '@/lib/supabase';
 import type { Contact, Conversation } from '@/types/database';
 
@@ -82,62 +83,35 @@ export default function ContactDetailScreen() {
   return (
     <ScrollView contentContainerStyle={styles.content}>
       <View style={styles.hero}>
-        <View style={styles.avatar}>
-          <Text style={styles.initials}>
-            {contact.name.split(' ').map((part) => part[0]).filter(Boolean).slice(0, 2).join('').toUpperCase()}
-          </Text>
+        <View style={[styles.avatar, { backgroundColor: avatarColor(contact.id) }]}>
+          <Text style={styles.initials}>{initials(contact.name)}</Text>
         </View>
-        <Text style={styles.name}>{contact.name}</Text>
-        <Text style={styles.role}>{[contact.role, contact.company].filter(Boolean).join(' · ') || 'No role or company added'}</Text>
-        <StatusBadge status={contact.status} />
+        <View style={styles.heroText}>
+          <Text style={styles.name}>{contact.name}</Text>
+          <Text style={styles.role}>{contactLine(contact)}</Text>
+          <StatusBadge status={contact.status} />
+        </View>
       </View>
 
       <View style={styles.actions}>
-        <ActionButton icon="create-outline" label="Edit" onPress={() => router.push(`/contact/${id}/edit`)} />
-        <ActionButton icon="chatbubble-outline" label="Add note" onPress={() => router.push(`/contact/${id}/conversation`)} primary />
+        <ActionButton label="Log" onPress={() => router.push(`/contact/${id}/conversation`)} primary />
+        <ActionButton label="Email" onPress={() => contact.email ? Linking.openURL(`mailto:${contact.email}`) : undefined} />
+        <ActionButton label="LinkedIn" onPress={() => contact.linkedin_url ? openUrl(contact.linkedin_url) : undefined} />
       </View>
 
-      <Section title="Contact information">
-        <DetailRow icon="business-outline" label="Company" value={contact.company} />
-        <DetailRow icon="briefcase-outline" label="Role" value={contact.role} />
-        <DetailRow icon="layers-outline" label="Industry" value={contact.industry} />
-        <DetailRow
-          icon="mail-outline"
-          label="Email"
-          value={contact.email}
-          onPress={contact.email ? () => Linking.openURL(`mailto:${contact.email}`) : undefined}
-        />
-        <DetailRow
-          icon="logo-linkedin"
-          label="LinkedIn"
-          value={contact.linkedin_url}
-          onPress={contact.linkedin_url ? () => openUrl(contact.linkedin_url!) : undefined}
-        />
-      </Section>
-
-      <Section title="Follow-up">
-        <View style={styles.followUpRow}>
-          <View style={[styles.detailIcon, overdue && styles.overdueIcon]}>
-            <Ionicons name="calendar-outline" size={19} color={overdue ? colors.danger : colors.primary} />
-          </View>
-          <View style={styles.detailText}>
-            <Text style={styles.detailLabel}>Next follow-up</Text>
-            <Text style={[styles.detailValue, overdue && styles.overdueText]}>
-              {contact.follow_up_date ? followUpLabel(contact.follow_up_date) : 'No follow-up scheduled'}
-            </Text>
-          </View>
-        </View>
-      </Section>
-
-      <Section title="General notes">
-        <Text style={contact.notes ? styles.notes : styles.placeholder}>
-          {contact.notes || 'No general notes yet.'}
-        </Text>
-      </Section>
+      <View style={styles.factsCard}>
+        <FactRow label="Stage" value={contact.status} />
+        <FactRow label="Next follow-up" value={contact.follow_up_date ? compactDueLabel(contact.follow_up_date) : 'No nudge'} danger={overdue} />
+        <FactRow label="Company" value={contact.company || 'Not added'} />
+        <FactRow label="Role" value={contact.role || 'Not added'} />
+        <FactRow label="Industry" value={contact.industry || 'Not added'} />
+        <FactRow label="Email" value={contact.email || 'Not added'} onPress={contact.email ? () => Linking.openURL(`mailto:${contact.email}`) : undefined} />
+        <FactRow label="LinkedIn" value={contact.linkedin_url || 'Not added'} onPress={contact.linkedin_url ? () => openUrl(contact.linkedin_url!) : undefined} />
+      </View>
 
       <View style={styles.historyHeader}>
         <View>
-          <Text style={styles.sectionTitle}>Conversation history</Text>
+          <Text style={styles.sectionEyebrow}>Conversations</Text>
           <Text style={styles.historyCount}>{conversations.length} {conversations.length === 1 ? 'entry' : 'entries'}</Text>
         </View>
         <Pressable onPress={() => router.push(`/contact/${id}/conversation`)} style={styles.smallAdd}>
@@ -157,57 +131,48 @@ export default function ContactDetailScreen() {
         )}
       </View>
 
+      <Text style={styles.sectionEyebrow}>Notes to self</Text>
+      <View style={styles.notesCard}>
+        <Text style={contact.notes ? styles.notes : styles.placeholder}>
+          {contact.notes || 'No general notes yet.'}
+        </Text>
+      </View>
+
       <Button label="Delete contact" variant="danger" onPress={deleteContact} />
     </ScrollView>
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{title}</Text>
-      <View style={styles.sectionCard}>{children}</View>
-    </View>
-  );
-}
-
-function DetailRow({
-  icon,
+function FactRow({
   label,
   value,
   onPress,
+  danger = false,
 }: {
-  icon: keyof typeof Ionicons.glyphMap;
   label: string;
-  value: string | null;
+  value: string;
   onPress?: () => void;
+  danger?: boolean;
 }) {
   return (
-    <Pressable disabled={!onPress} onPress={onPress} style={styles.detailRow}>
-      <View style={styles.detailIcon}><Ionicons name={icon} size={19} color={colors.primary} /></View>
-      <View style={styles.detailText}>
-        <Text style={styles.detailLabel}>{label}</Text>
-        <Text style={[styles.detailValue, !value && styles.placeholder]} numberOfLines={2}>{value || 'Not added'}</Text>
-      </View>
-      {onPress ? <Ionicons name="open-outline" size={17} color={colors.textMuted} /> : null}
+    <Pressable disabled={!onPress} onPress={onPress} style={styles.factRow}>
+      <Text style={styles.factLabel}>{label}</Text>
+      <Text style={[styles.factValue, danger && styles.overdueText]} numberOfLines={2}>{value}</Text>
     </Pressable>
   );
 }
 
 function ActionButton({
-  icon,
   label,
   onPress,
   primary = false,
 }: {
-  icon: keyof typeof Ionicons.glyphMap;
   label: string;
-  onPress: () => void;
+  onPress: () => void | Promise<void> | undefined | Promise<unknown>;
   primary?: boolean;
 }) {
   return (
     <Pressable onPress={onPress} style={[styles.actionButton, primary && styles.primaryAction]}>
-      <Ionicons name={icon} size={20} color={primary ? colors.white : colors.primary} />
       <Text style={[styles.actionText, primary && styles.primaryActionText]}>{label}</Text>
     </Pressable>
   );
@@ -215,41 +180,40 @@ function ActionButton({
 
 function ConversationCard({ conversation }: { conversation: Conversation }) {
   return (
-    <View style={styles.conversation}>
-      <View style={styles.conversationTop}>
-        <Text style={styles.conversationType}>{conversation.conversation_type}</Text>
-        <Text style={styles.conversationDate}>{formatDate(conversation.conversation_date)}</Text>
+    <View style={styles.timelineRow}>
+      <View style={styles.timelineRail}>
+        <View style={styles.timelineDot} />
+        <View style={styles.timelineLine} />
       </View>
-      <Text style={styles.conversationNotes}>{conversation.notes || 'No notes added.'}</Text>
-      {conversation.next_step ? (
-        <View style={styles.nextStep}>
-          <Ionicons name="arrow-forward-circle-outline" size={18} color={colors.primary} />
-          <View style={styles.detailText}>
-            <Text style={styles.nextStepLabel}>NEXT STEP</Text>
-            <Text style={styles.nextStepText}>{conversation.next_step}</Text>
-          </View>
+      <View style={styles.conversation}>
+        <View style={styles.conversationTop}>
+          <Text style={styles.conversationType}>{conversation.conversation_type}</Text>
+          <Text style={styles.conversationDate}>{formatDate(conversation.conversation_date, { month: 'short', day: 'numeric' })}</Text>
         </View>
-      ) : null}
+        <Text style={styles.conversationNotes}>{conversation.notes || 'No notes added.'}</Text>
+        {conversation.next_step ? (
+          <Text style={styles.nextStepText}>Next: {conversation.next_step}</Text>
+        ) : null}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  content: { gap: 22, padding: 20, paddingBottom: 44 },
+  content: { gap: 18, padding: 18, paddingBottom: 44 },
   editLink: { color: colors.primary, fontSize: 16, fontWeight: '800' },
-  hero: { alignItems: 'center', gap: 8, paddingVertical: 8 },
+  hero: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingTop: 4 },
   avatar: {
-    width: 76,
-    height: 76,
+    width: 64,
+    height: 64,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 25,
-    backgroundColor: colors.primarySoft,
-    marginBottom: 4,
+    borderRadius: 32,
   },
-  initials: { color: colors.primaryDark, fontSize: 24, fontWeight: '900' },
-  name: { color: colors.text, fontSize: 27, fontWeight: '900', textAlign: 'center' },
-  role: { color: colors.textMuted, fontSize: 15, textAlign: 'center', marginBottom: 3 },
+  initials: { color: colors.white, fontSize: 21, fontWeight: '700' },
+  heroText: { flex: 1, gap: 4 },
+  name: { color: colors.text, fontSize: 22, fontWeight: '800', letterSpacing: -0.4 },
+  role: { color: colors.textMuted, fontSize: 13.5, lineHeight: 19 },
   actions: { flexDirection: 'row', gap: 10 },
   actionButton: {
     flex: 1,
@@ -260,38 +224,27 @@ const styles = StyleSheet.create({
     gap: 8,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 14,
+    borderRadius: 12,
     backgroundColor: colors.surface,
   },
   primaryAction: { borderColor: colors.primary, backgroundColor: colors.primary },
-  actionText: { color: colors.primary, fontSize: 14, fontWeight: '800' },
+  actionText: { color: colors.textMuted, fontSize: 14.5, fontWeight: '700' },
   primaryActionText: { color: colors.white },
-  section: { gap: 10 },
-  sectionTitle: { color: colors.text, fontSize: 18, fontWeight: '900' },
-  sectionCard: {
+  sectionEyebrow: { color: colors.textSubtle, fontSize: 12, fontWeight: '800', letterSpacing: 0.8, textTransform: 'uppercase', marginHorizontal: 4 },
+  factsCard: {
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 18,
+    borderRadius: 16,
     backgroundColor: colors.surface,
     overflow: 'hidden',
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
   },
-  detailRow: { minHeight: 69, flexDirection: 'row', alignItems: 'center', gap: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
-  followUpRow: { minHeight: 76, flexDirection: 'row', alignItems: 'center', gap: 12 },
-  detailIcon: {
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 11,
-    backgroundColor: colors.primarySoft,
-  },
-  overdueIcon: { backgroundColor: colors.dangerSoft },
-  detailText: { flex: 1, gap: 3 },
-  detailLabel: { color: colors.textMuted, fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 },
-  detailValue: { color: colors.text, fontSize: 15, fontWeight: '600' },
+  factRow: { minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 16, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.divider },
+  factLabel: { color: colors.textSubtle, fontSize: 13.5 },
+  factValue: { flex: 1, color: colors.text, fontSize: 13.5, fontWeight: '600', textAlign: 'right' },
   overdueText: { color: colors.danger },
-  notes: { color: colors.text, fontSize: 15, lineHeight: 22, paddingVertical: 16 },
+  notesCard: { borderRadius: 14, borderWidth: 1, borderColor: colors.noteBorder, backgroundColor: colors.note, padding: 14 },
+  notes: { color: '#5A4A22', fontSize: 13.5, lineHeight: 21 },
   placeholder: { color: colors.textMuted, fontWeight: '400' },
   historyHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   historyCount: { color: colors.textMuted, fontSize: 13, marginTop: 3 },
@@ -303,20 +256,15 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: colors.primarySoft,
   },
-  timeline: { gap: 12 },
-  conversation: {
-    gap: 13,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 18,
-    backgroundColor: colors.surface,
-    padding: 16,
-  },
+  timeline: { gap: 0 },
+  timelineRow: { flexDirection: 'row', gap: 12 },
+  timelineRail: { alignItems: 'center', width: 12 },
+  timelineDot: { width: 10, height: 10, borderRadius: 6, borderWidth: 2.5, borderColor: colors.primary, backgroundColor: colors.surface, marginTop: 4 },
+  timelineLine: { flex: 1, width: 2, backgroundColor: 'rgba(0,0,0,0.08)' },
+  conversation: { flex: 1, paddingBottom: 16 },
   conversationTop: { flexDirection: 'row', justifyContent: 'space-between', gap: 12 },
-  conversationType: { flex: 1, color: colors.text, fontSize: 15, fontWeight: '800' },
-  conversationDate: { color: colors.textMuted, fontSize: 12, fontWeight: '600' },
-  conversationNotes: { color: colors.text, fontSize: 15, lineHeight: 22 },
-  nextStep: { flexDirection: 'row', gap: 9, borderRadius: 13, backgroundColor: colors.primarySoft, padding: 12 },
-  nextStepLabel: { color: colors.primary, fontSize: 10, fontWeight: '900', letterSpacing: 0.8 },
-  nextStepText: { color: colors.primaryDark, fontSize: 14, lineHeight: 20, fontWeight: '600' },
+  conversationType: { flex: 1, color: colors.text, fontSize: 14, fontWeight: '700' },
+  conversationDate: { color: '#A6ABB4', fontSize: 11.5, fontWeight: '600', fontFamily: 'Menlo' },
+  conversationNotes: { color: '#4C525C', fontSize: 13.5, lineHeight: 20, marginTop: 4 },
+  nextStepText: { color: colors.primaryDark, fontSize: 13, lineHeight: 19, fontWeight: '600', marginTop: 6 },
 });

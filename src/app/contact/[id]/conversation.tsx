@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { ChipSelect } from '@/components/ui/chip-select';
@@ -51,6 +51,12 @@ export default function AddConversationScreen() {
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <View style={styles.sheetHandle} />
+        <View style={styles.header}>
+          <Text style={styles.cancel} onPress={() => router.back()}>Cancel</Text>
+          <Text style={styles.title}>Log an interaction</Text>
+          <Text style={[styles.cancel, notes.trim() && styles.saveHint]}>Save</Text>
+        </View>
         <FormInput
           label="Date"
           hint="Use YYYY-MM-DD"
@@ -59,13 +65,13 @@ export default function AddConversationScreen() {
           autoCapitalize="none"
           placeholder="2026-07-15"
         />
-        <ChipSelect label="Conversation type" options={CONVERSATION_TYPES} value={type} onChange={setType} />
+        <ChipSelect label="Type" options={CONVERSATION_TYPES} value={type} onChange={setType} />
         <FormInput
-          label="Conversation notes *"
+          label="What came out of it *"
           value={notes}
           onChangeText={setNotes}
           multiline
-          placeholder="What did you discuss? What stood out?"
+          placeholder="What did you discuss? What stood out? What should future-you remember?"
         />
         <FormInput
           label="Next step"
@@ -84,6 +90,11 @@ export default function AddConversationScreen() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.background },
-  content: { gap: 20, padding: 20, paddingBottom: 42 },
+  content: { gap: 18, padding: 18, paddingBottom: 42 },
+  sheetHandle: { width: 38, height: 5, borderRadius: 3, backgroundColor: 'rgba(0,0,0,0.16)', alignSelf: 'center', marginBottom: -2 },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 },
+  cancel: { color: colors.textSubtle, fontSize: 15.5, fontWeight: '600' },
+  saveHint: { color: colors.primary },
+  title: { color: colors.text, fontSize: 16.5, fontWeight: '800', letterSpacing: -0.2 },
   footer: { marginTop: 5 },
 });

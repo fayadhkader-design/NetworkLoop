@@ -1,19 +1,23 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ContactCard } from '@/components/contact-card';
 import { EmptyState, LoadingState } from '@/components/ui/states';
 import { colors } from '@/constants/colors';
+import { isDue } from '@/lib/design';
 import { supabase } from '@/lib/supabase';
-import type { Contact } from '@/types/database';
+import { Contact, ContactStatus } from '@/types/database';
+
+type Filter = 'All' | 'Due' | 'Stale' | 'Warm' | ContactStatus;
 
 export default function ContactsScreen() {
   const router = useRouter();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [query, setQuery] = useState('');
+  const [filter, setFilter] = useState<Filter>('All');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -31,35 +35,39 @@ export default function ContactsScreen() {
 
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
-    if (!normalized) return contacts;
-    return contacts.filter((contact) =>
+    let next = contacts;
+    if (filter === 'Due') next = next.filter(isDue);
+    else if (filter === 'Stale') next = next.filter((contact) => !isDue(contact) && contact.updated_at < new Date(Date.now() - 14 * 86400000).toISOString());
+    else if (filter === 'Warm') next = next.filter((contact) => contact.status === 'Strong connection' || contact.status === 'Spoke with them');
+    else if (filter !== 'All') next = next.filter((contact) => contact.status === filter);
+    if (!normalized) return next;
+    return next.filter((contact) =>
       [contact.name, contact.company, contact.role]
         .filter(Boolean)
         .some((value) => value!.toLowerCase().includes(normalized)),
     );
-  }, [contacts, query]);
+  }, [contacts, filter, query]);
+
+  const filters: Filter[] = ['All', 'Due', 'Warm', 'Stale', 'Spoke with them', 'Call scheduled', 'Follow-up needed', 'Strong connection'];
 
   if (loading) return <LoadingState label="Loading contacts…" />;
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <View style={styles.header}>
-        <View>
-          <Text style={styles.title}>Contacts</Text>
-          <Text style={styles.subtitle}>{contacts.length} {contacts.length === 1 ? 'person' : 'people'} in your loop</Text>
-        </View>
+        <Text style={styles.title}>Contacts</Text>
         <Pressable onPress={() => router.push('/contact/new')} style={styles.addButton}>
           <Ionicons name="add" size={25} color={colors.white} />
         </Pressable>
       </View>
 
       <View style={styles.search}>
-        <Ionicons name="search-outline" size={20} color={colors.textMuted} />
+        <Ionicons name="search-outline" size={18} color={colors.textSubtle} />
         <TextInput
           value={query}
           onChangeText={setQuery}
-          placeholder="Search name, company, or role"
-          placeholderTextColor={colors.textMuted}
+          placeholder="Name, firm, or group"
+          placeholderTextColor={colors.textSubtle}
           style={styles.searchInput}
           autoCapitalize="none"
           autoCorrect={false}
@@ -69,13 +77,25 @@ export default function ContactsScreen() {
         ) : null}
       </View>
 
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+        {filters.map((item) => {
+          const selected = item === filter;
+          return (
+            <Pressable key={item} onPress={() => setFilter(item)} style={[styles.chip, selected && styles.selectedChip]}>
+              <Text style={[styles.chipText, selected && styles.selectedChipText]}>{item}</Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+
+      <Text style={styles.resultLine}>{filtered.length} of {contacts.length} shown</Text>
+
       <FlatList
         data={filtered}
         keyExtractor={(item) => item.id}
         contentContainerStyle={[styles.list, !filtered.length && styles.emptyList]}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
         renderItem={({ item }) => (
-          <ContactCard contact={item} onPress={() => router.push(`/contact/${item.id}`)} />
+          <ContactCard contact={item} onPress={() => router.push(`/contact/${item.id}`)} compact />
         )}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); loadContacts(); }} />}
         ListEmptyComponent={
@@ -91,32 +111,33 @@ export default function ContactsScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.background },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20, paddingBottom: 16 },
-  title: { color: colors.text, fontSize: 30, fontWeight: '900', letterSpacing: -0.5 },
-  subtitle: { color: colors.textMuted, fontSize: 14, marginTop: 4 },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 18, paddingBottom: 14 },
+  title: { color: colors.text, fontSize: 32, fontWeight: '800', letterSpacing: -0.7 },
   addButton: {
-    width: 46,
-    height: 46,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 15,
+    borderRadius: 22,
     backgroundColor: colors.primary,
   },
   search: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    height: 50,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 14,
-    backgroundColor: colors.surface,
-    marginHorizontal: 20,
-    marginBottom: 17,
-    paddingHorizontal: 14,
+    gap: 8,
+    minHeight: 42,
+    borderRadius: 12,
+    backgroundColor: colors.surfaceMuted,
+    marginHorizontal: 18,
+    paddingHorizontal: 12,
   },
-  searchInput: { flex: 1, color: colors.text, fontSize: 15 },
-  list: { paddingHorizontal: 20, paddingBottom: 32 },
+  searchInput: { flex: 1, color: colors.text, fontSize: 15.5 },
+  chips: { gap: 7, paddingHorizontal: 18, paddingTop: 12, paddingBottom: 2 },
+  chip: { flex: 0, borderRadius: 20, backgroundColor: colors.surface, paddingHorizontal: 13, paddingVertical: 7 },
+  selectedChip: { backgroundColor: colors.primary },
+  chipText: { color: colors.textMuted, fontSize: 13, fontWeight: '700' },
+  selectedChipText: { color: colors.white },
+  resultLine: { color: colors.textSubtle, fontSize: 12, marginHorizontal: 22, marginTop: 14, marginBottom: 8 },
+  list: { marginHorizontal: 18, borderWidth: 1, borderColor: colors.border, borderRadius: 16, overflow: 'hidden', backgroundColor: colors.surface, paddingBottom: 84 },
   emptyList: { flexGrow: 1, justifyContent: 'center' },
-  separator: { height: 12 },
 });

@@ -32,17 +32,17 @@ export function ChipSelect<T extends string>({ label, options, value, onChange }
 
 const styles = StyleSheet.create({
   group: { gap: 8 },
-  label: { color: colors.text, fontSize: 14, fontWeight: '700' },
-  row: { gap: 8, paddingRight: 18 },
+  label: { color: colors.text, fontSize: 13, fontWeight: '700' },
+  row: { gap: 7, paddingRight: 18 },
   chip: {
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: 'rgba(0,0,0,0.12)',
     borderRadius: 999,
     backgroundColor: colors.surface,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingHorizontal: 13,
+    paddingVertical: 9,
   },
-  selectedChip: { borderColor: colors.primary, backgroundColor: colors.primarySoft },
-  chipText: { color: colors.textMuted, fontSize: 14, fontWeight: '600' },
-  selectedText: { color: colors.primaryDark },
+  selectedChip: { borderColor: colors.primary, backgroundColor: colors.primary },
+  chipText: { color: colors.textMuted, fontSize: 13, fontWeight: '600' },
+  selectedText: { color: colors.white },
 });
