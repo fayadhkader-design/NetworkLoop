@@ -161,7 +161,9 @@ function SettingsRow({
         <Text style={[styles.rowLabel, danger && styles.dangerText]}>{label}</Text>
         {detail ? <Text style={styles.rowDetail}>{detail}</Text> : null}
       </View>
-      {rightAccessory ?? <Ionicons name="chevron-forward" size={19} color={colors.textMuted} />}
+      <View style={styles.rowAccessory}>
+        {rightAccessory ?? <Ionicons name="chevron-forward" size={19} color={colors.textMuted} />}
+      </View>
     </Pressable>
   );
 }
@@ -219,7 +221,13 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primarySoft,
   },
   dangerIcon: { backgroundColor: colors.dangerSoft },
-  rowText: { flex: 1, gap: 2 },
+  rowText: { flex: 1, justifyContent: 'center', gap: 2 },
+  rowAccessory: {
+    minWidth: 52,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   rowLabel: { color: colors.text, fontSize: 15, fontWeight: '700' },
   rowDetail: { color: colors.textMuted, fontSize: 12 },
   dangerText: { color: colors.danger },
