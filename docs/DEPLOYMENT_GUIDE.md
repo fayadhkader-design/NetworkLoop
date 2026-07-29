@@ -5,7 +5,7 @@
 Set these values in `.env`:
 
 ```env
-EXPO_PUBLIC_SUPPORT_EMAIL=fayadhkader@gmail.com
+EXPO_PUBLIC_SUPPORT_EMAIL=networkloop.review@gmail.com
 EXPO_PUBLIC_PRIVACY_URL=https://ok-seven-wheat.vercel.app/privacy
 EXPO_PUBLIC_SUPPORT_URL=https://ok-seven-wheat.vercel.app/support
 ```
