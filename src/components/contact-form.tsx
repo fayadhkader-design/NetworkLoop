@@ -3,6 +3,7 @@ import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } f
 
 import { Button } from '@/components/ui/button';
 import { ChipSelect } from '@/components/ui/chip-select';
+import { DatePickerField } from '@/components/ui/date-picker-field';
 import { FormInput } from '@/components/ui/form-input';
 import { colors } from '@/constants/colors';
 import { isValidDateString } from '@/lib/date';
@@ -92,14 +93,12 @@ export function ContactForm({
         />
         <FormInput label="Industry" value={values.industry} onChangeText={(text) => update('industry', text)} placeholder="Technology" />
         <ChipSelect label="Status" options={CONTACT_STATUSES} value={values.status} onChange={(status) => update('status', status)} />
-        <FormInput
+        <DatePickerField
           label="Next follow-up date"
-          hint="Use YYYY-MM-DD. Leave blank if no follow-up is scheduled."
+          hint="Leave blank if no follow-up is scheduled."
           value={values.follow_up_date}
-          onChangeText={(text) => update('follow_up_date', text)}
-          autoCapitalize="none"
-          keyboardType={Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'default'}
-          placeholder="2026-07-15"
+          onChange={(date) => update('follow_up_date', date)}
+          placeholder="Choose a follow-up date"
         />
         <FormInput
           label="General notes"

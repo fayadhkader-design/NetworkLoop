@@ -4,6 +4,7 @@ import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, Vi
 
 import { Button } from '@/components/ui/button';
 import { ChipSelect } from '@/components/ui/chip-select';
+import { DatePickerField } from '@/components/ui/date-picker-field';
 import { FormInput } from '@/components/ui/form-input';
 import { colors } from '@/constants/colors';
 import { isValidDateString, todayDateString } from '@/lib/date';
@@ -57,13 +58,13 @@ export default function AddConversationScreen() {
           <Text style={styles.title}>Log an interaction</Text>
           <Text style={[styles.cancel, notes.trim() && styles.saveHint]}>Save</Text>
         </View>
-        <FormInput
+        <DatePickerField
           label="Date"
-          hint="Use YYYY-MM-DD"
           value={date}
-          onChangeText={setDate}
-          autoCapitalize="none"
-          placeholder="2026-07-15"
+          onChange={setDate}
+          hint="Choose when the conversation happened."
+          placeholder="Choose a date"
+          allowClear={false}
         />
         <ChipSelect label="Type" options={CONVERSATION_TYPES} value={type} onChange={setType} />
         <FormInput
