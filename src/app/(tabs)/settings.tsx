@@ -1,15 +1,29 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { colors } from '@/constants/colors';
 import { APP_VERSION } from '@/constants/app';
+import {
+  getReminderStatus,
+  requestReminderPermission,
+  setRemindersEnabled,
+  syncFollowUpReminders,
+  type ReminderStatus,
+} from '@/lib/reminders';
 import { useAuth } from '@/providers/auth-provider';
 
 export default function SettingsScreen() {
   const router = useRouter();
   const { user, signOut } = useAuth();
+  const [reminderStatus, setReminderStatus] = useState<ReminderStatus>('off');
+  const [reminderLoading, setReminderLoading] = useState(false);
+
+  useEffect(() => {
+    getReminderStatus().then(setReminderStatus).catch(() => setReminderStatus('off'));
+  }, []);
 
   async function handleSignOut() {
     try {
@@ -18,6 +32,51 @@ export default function SettingsScreen() {
       Alert.alert('Could not log out', error instanceof Error ? error.message : 'Please try again.');
     }
   }
+
+  async function toggleReminders() {
+    if (reminderLoading) return;
+    if (reminderStatus === 'unsupported') {
+      Alert.alert('Reminders unavailable', 'Follow-up reminders work in the installed mobile app.');
+      return;
+    }
+
+    setReminderLoading(true);
+    try {
+      if (reminderStatus === 'on') {
+        await setRemindersEnabled(false);
+        setReminderStatus('off');
+        Alert.alert('Reminders off', 'NetworkLoop will stop sending follow-up reminders on this device.');
+        return;
+      }
+
+      const allowed = await requestReminderPermission();
+      if (!allowed) {
+        setReminderStatus('denied');
+        Alert.alert(
+          'Notifications are off',
+          'To use reminders, allow notifications for NetworkLoop in your phone settings.',
+        );
+        return;
+      }
+
+      if (user?.id) await syncFollowUpReminders(user.id);
+      setReminderStatus('on');
+      Alert.alert('Reminders on', 'NetworkLoop will remind you on the morning of your follow-up dates.');
+    } catch (error) {
+      Alert.alert('Could not update reminders', error instanceof Error ? error.message : 'Please try again.');
+    } finally {
+      setReminderLoading(false);
+    }
+  }
+
+  const remindersEnabled = reminderStatus === 'on';
+  const reminderDetail = reminderStatus === 'unsupported'
+    ? 'Available in the mobile app'
+    : reminderStatus === 'denied'
+      ? 'Turn on in phone settings'
+      : remindersEnabled
+        ? 'Morning nudges are on'
+        : 'Get nudged when follow-ups are due';
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -42,6 +101,21 @@ export default function SettingsScreen() {
         </View>
 
         <View style={styles.group}>
+          <SettingsRow
+            icon="notifications-outline"
+            label="Follow-up reminders"
+            detail={reminderDetail}
+            onPress={toggleReminders}
+            rightAccessory={(
+              <Switch
+                value={remindersEnabled}
+                onValueChange={toggleReminders}
+                disabled={reminderLoading || reminderStatus === 'unsupported'}
+                trackColor={{ false: colors.surfaceMuted, true: colors.primarySoft }}
+                thumbColor={remindersEnabled ? colors.primary : colors.textSubtle}
+              />
+            )}
+          />
           <SettingsRow icon="shield-checkmark-outline" label="Privacy Policy" onPress={() => router.push('/privacy')} />
           <SettingsRow icon="help-circle-outline" label="Support" onPress={() => router.push('/support')} />
           <SettingsRow icon="log-out-outline" label="Log out" onPress={handleSignOut} />
@@ -67,12 +141,14 @@ function SettingsRow({
   icon,
   label,
   detail,
+  rightAccessory,
   danger = false,
   onPress,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
   detail?: string;
+  rightAccessory?: React.ReactNode;
   danger?: boolean;
   onPress: () => void;
 }) {
@@ -85,7 +161,7 @@ function SettingsRow({
         <Text style={[styles.rowLabel, danger && styles.dangerText]}>{label}</Text>
         {detail ? <Text style={styles.rowDetail}>{detail}</Text> : null}
       </View>
-      <Ionicons name="chevron-forward" size={19} color={colors.textMuted} />
+      {rightAccessory ?? <Ionicons name="chevron-forward" size={19} color={colors.textMuted} />}
     </Pressable>
   );
 }
