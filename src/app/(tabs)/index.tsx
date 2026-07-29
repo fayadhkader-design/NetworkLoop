@@ -54,7 +54,7 @@ export default function DashboardScreen() {
 
   const today = todayDateString();
   const dueCount = data.contacts.filter((contact) => contact.follow_up_date && contact.follow_up_date <= today).length;
-  const followUps = data.contacts.filter((contact) => isDue(contact)).slice(0, 4);
+  const followUps = data.contacts.filter((contact) => contact.follow_up_date).slice(0, 4);
   const stale = data.contacts
     .filter((contact) => !isDue(contact) && contact.updated_at < new Date(Date.now() - 14 * 86400000).toISOString())
     .slice(0, 3);
@@ -94,7 +94,7 @@ export default function DashboardScreen() {
         </View>
 
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionEyebrow}>Follow up now</Text>
+          <Text style={styles.sectionEyebrow}>Follow up soon</Text>
           <Pressable onPress={() => router.push('/contact/new')}>
             <Text style={styles.inlineAction}>Add contact</Text>
           </Pressable>
@@ -114,8 +114,8 @@ export default function DashboardScreen() {
           )) : (
             <EmptyState
               icon="checkmark-circle-outline"
-              title="No follow-ups due"
-              detail="You’re all caught up. Add a follow-up date to a contact when you’re ready."
+              title="No follow-ups scheduled"
+              detail="Add a follow-up date to a contact and it will show up here."
             />
           )}
         </View>

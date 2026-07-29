@@ -77,7 +77,12 @@ export default function ContactsScreen() {
         ) : null}
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.chipScroller}
+        contentContainerStyle={styles.chips}
+      >
         {filters.map((item) => {
           const selected = item === filter;
           return (
@@ -132,10 +137,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   searchInput: { flex: 1, color: colors.text, fontSize: 15.5 },
-  chips: { gap: 7, paddingHorizontal: 18, paddingTop: 12, paddingBottom: 2 },
-  chip: { flex: 0, borderRadius: 20, backgroundColor: colors.surface, paddingHorizontal: 13, paddingVertical: 7 },
+  chipScroller: { flexGrow: 0, maxHeight: 40 },
+  chips: { gap: 6, paddingHorizontal: 18, paddingTop: 10, paddingBottom: 2 },
+  chip: { flex: 0, borderRadius: 16, backgroundColor: colors.surface, paddingHorizontal: 11, paddingVertical: 5 },
   selectedChip: { backgroundColor: colors.primary },
-  chipText: { color: colors.textMuted, fontSize: 13, fontWeight: '700' },
+  chipText: { color: colors.textMuted, fontSize: 12, fontWeight: '700' },
   selectedChipText: { color: colors.white },
   resultLine: { color: colors.textSubtle, fontSize: 12, marginHorizontal: 22, marginTop: 14, marginBottom: 8 },
   list: { marginHorizontal: 18, borderWidth: 1, borderColor: colors.border, borderRadius: 16, overflow: 'hidden', backgroundColor: colors.surface, paddingBottom: 84 },
