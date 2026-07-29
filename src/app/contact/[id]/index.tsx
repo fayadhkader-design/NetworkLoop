@@ -9,6 +9,7 @@ import { EmptyState, LoadingState } from '@/components/ui/states';
 import { colors } from '@/constants/colors';
 import { avatarColor, compactDueLabel, contactLine, initials } from '@/lib/design';
 import { formatDate, todayDateString } from '@/lib/date';
+import { cancelFollowUpReminder } from '@/lib/reminders';
 import { supabase } from '@/lib/supabase';
 import type { Contact, Conversation } from '@/types/database';
 
@@ -61,7 +62,10 @@ export default function ContactDetailScreen() {
           onPress: async () => {
             const { error } = await supabase.from('contacts').delete().eq('id', id);
             if (error) Alert.alert('Could not delete contact', error.message);
-            else router.replace('/(tabs)/contacts');
+            else {
+              await cancelFollowUpReminder(id);
+              router.replace('/(tabs)/contacts');
+            }
           },
         },
       ],

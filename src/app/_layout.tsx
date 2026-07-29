@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 
 import { LoadingState } from '@/components/ui/states';
 import { colors } from '@/constants/colors';
+import { configureNotificationPresentation, syncFollowUpReminders } from '@/lib/reminders';
 import { AuthProvider, useAuth } from '@/providers/auth-provider';
 
 const navigationTheme = {
@@ -34,6 +35,14 @@ function RootNavigator() {
     if (!session && !isPublicRoute) router.replace('/login');
     if (session && inAuthGroup) router.replace('/(tabs)');
   }, [loading, router, segments, session]);
+
+  useEffect(() => {
+    configureNotificationPresentation();
+  }, []);
+
+  useEffect(() => {
+    if (session?.user.id) syncFollowUpReminders(session.user.id).catch(() => null);
+  }, [session?.user.id]);
 
   if (loading) return <LoadingState label="Opening NetworkLoop…" />;
 

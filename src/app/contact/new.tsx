@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 
 import { ContactForm } from '@/components/contact-form';
+import { requestReminderPermission, scheduleFollowUpReminder } from '@/lib/reminders';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/providers/auth-provider';
 import type { ContactFormValues } from '@/types/database';
@@ -11,7 +12,7 @@ export default function NewContactScreen() {
 
   async function createContact(values: ContactFormValues) {
     if (!user) throw new Error('You must be logged in.');
-    const { error } = await supabase.from('contacts').insert({
+    const { data, error } = await supabase.from('contacts').insert({
       user_id: user.id,
       name: values.name,
       company: values.company || null,
@@ -22,8 +23,12 @@ export default function NewContactScreen() {
       status: values.status,
       notes: values.notes || null,
       follow_up_date: values.follow_up_date || null,
-    });
+    }).select('id,name,company,follow_up_date').single();
     if (error) throw error;
+    if (values.follow_up_date && data) {
+      const allowed = await requestReminderPermission();
+      if (allowed) await scheduleFollowUpReminder(data);
+    }
     router.back();
   }
 

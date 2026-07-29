@@ -4,6 +4,7 @@ import { Alert } from 'react-native';
 
 import { ContactForm } from '@/components/contact-form';
 import { LoadingState } from '@/components/ui/states';
+import { cancelFollowUpReminder, requestReminderPermission, scheduleFollowUpReminder } from '@/lib/reminders';
 import { supabase } from '@/lib/supabase';
 import type { Contact, ContactFormValues } from '@/types/database';
 
@@ -34,7 +35,7 @@ export default function EditContactScreen() {
   };
 
   async function updateContact(values: ContactFormValues) {
-    const { error } = await supabase.from('contacts').update({
+    const { data, error } = await supabase.from('contacts').update({
       name: values.name,
       company: values.company || null,
       role: values.role || null,
@@ -44,8 +45,14 @@ export default function EditContactScreen() {
       status: values.status,
       notes: values.notes || null,
       follow_up_date: values.follow_up_date || null,
-    }).eq('id', id);
+    }).eq('id', id).select('id,name,company,follow_up_date').single();
     if (error) throw error;
+    if (values.follow_up_date && data) {
+      const allowed = await requestReminderPermission();
+      if (allowed) await scheduleFollowUpReminder(data);
+    } else {
+      await cancelFollowUpReminder(id);
+    }
     router.back();
   }
 
