@@ -40,7 +40,13 @@
           "imageWidth": 160
         }
       ],
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      [
+        "expo-notifications",
+        {
+          "color": "#1677F2"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
